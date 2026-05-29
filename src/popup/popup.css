@@ -1,0 +1,754 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2933;
+  background: #f5f7fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 760px;
+  height: 620px;
+  margin: 0;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.loading,
+.appShell {
+  width: 100vw;
+  height: 100vh;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  color: #667085;
+}
+
+.appShell {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  --calendar-font-size: 12px;
+  --calendar-toolbar-padding: 10px 12px;
+  --calendar-title-size: 17px;
+  --day-cell-min-height: 54px;
+  --day-cell-gap: 4px;
+  --summary-pill-height: 16px;
+  --summary-pill-min-width: 25px;
+  --summary-pill-font-size: 10px;
+}
+
+.appShell.density-compact {
+  --calendar-font-size: 11px;
+  --calendar-toolbar-padding: 7px 10px;
+  --calendar-title-size: 15px;
+  --day-cell-min-height: 42px;
+  --day-cell-gap: 2px;
+  --summary-pill-height: 14px;
+  --summary-pill-min-width: 22px;
+  --summary-pill-font-size: 9px;
+}
+
+.appShell.density-spacious {
+  --calendar-font-size: 13px;
+  --calendar-toolbar-padding: 12px 14px;
+  --calendar-title-size: 19px;
+  --day-cell-min-height: 68px;
+  --day-cell-gap: 6px;
+  --summary-pill-height: 19px;
+  --summary-pill-min-width: 31px;
+  --summary-pill-font-size: 11px;
+}
+
+.navRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-right: 1px solid #dbe1ea;
+  background: #ffffff;
+}
+
+.navButton,
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  color: #667085;
+  background: transparent;
+}
+
+.iconButton.small {
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.navButton.active {
+  color: #155eef;
+  background: #eaf1ff;
+}
+
+.mainPane {
+  position: relative;
+  min-width: 0;
+  height: 100vh;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.calendarPage,
+.settingsPage,
+.availabilityPage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.pageHeader,
+.panelHeader,
+.buttonRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pageHeader {
+  flex-wrap: wrap;
+}
+
+.selectionActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  color: #667085;
+  font-size: 12px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  color: #101828;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+h2 {
+  color: #344054;
+  font-size: 13px;
+}
+
+.calendarSurface {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.eventDetailsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 210px;
+  overflow: auto;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.eventDetailsPanel.empty {
+  color: #667085;
+}
+
+.eventDetailsPanel.empty p {
+  font-size: 12px;
+}
+
+.detailsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detailsActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detailsHeader h2 {
+  color: #101828;
+  font-size: 15px;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detailItem,
+.detailBlock {
+  min-width: 0;
+  border: 1px solid #e4e7ec;
+  border-radius: 7px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.detailItem span,
+.detailBlock span {
+  display: block;
+  margin-bottom: 3px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.detailItem strong,
+.detailItem a,
+.detailBlock p {
+  display: block;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #101828;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.detailItem a {
+  color: #155eef;
+}
+
+.connectOverlay {
+  position: absolute;
+  z-index: 5;
+  top: 52px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 560px;
+  padding: 12px;
+  border: 1px solid #b8cef8;
+  border-radius: 8px;
+  background: #f7fbff;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.14);
+  transform: translateX(-50%);
+}
+
+.connectOverlay strong {
+  display: block;
+  color: #101828;
+  font-size: 13px;
+}
+
+.connectOverlay p {
+  margin-top: 2px;
+  color: #667085;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.connectChoices {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  min-width: 210px;
+}
+
+.primaryButton,
+.secondaryButton,
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 7px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.primaryButton {
+  color: #ffffff;
+  background: #155eef;
+}
+
+.primaryButton.fullWidth {
+  width: 100%;
+}
+
+.secondaryButton.fullWidth {
+  width: 100%;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.secondaryButton:disabled,
+.ghostButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.secondaryButton {
+  color: #344054;
+  border-color: #d0d5dd;
+  background: #ffffff;
+}
+
+.secondaryButton.compact {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.ghostButton.compact {
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: 12px;
+}
+
+.ghostButton {
+  color: #667085;
+  background: transparent;
+}
+
+.iconButton {
+  color: #344054;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.dialogBackdrop {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(16, 24, 40, 0.24);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(480px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+}
+
+.dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #344054;
+  font-size: 12px;
+}
+
+.dialog input,
+.dialog textarea {
+  width: 100%;
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  padding: 8px 9px;
+  color: #101828;
+  background: #ffffff;
+}
+
+.dialogGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.panel.grow {
+  flex: 1;
+  min-height: 0;
+}
+
+.settingsPage {
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.settingsPage label,
+.inlineField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #344054;
+  font-size: 13px;
+}
+
+.settingsPage input[type="checkbox"] {
+  margin-right: auto;
+  accent-color: #155eef;
+}
+
+.inlineField input {
+  width: 88px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.segmented button {
+  min-height: 34px;
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  color: #344054;
+  text-transform: capitalize;
+  background: #ffffff;
+}
+
+.segmented button.selected {
+  border-color: #155eef;
+  color: #155eef;
+  background: #edf4ff;
+}
+
+.muted,
+.statusMessage {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.accountRows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.accountRows div,
+.connectedAccountRow {
+  border: 1px solid #e4e7ec;
+  border-radius: 7px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.accountRows span,
+.connectedAccountRow span {
+  display: block;
+  color: #667085;
+  font-size: 11px;
+}
+
+.accountRows strong,
+.connectedAccountRow strong {
+  display: block;
+  overflow: hidden;
+  color: #101828;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connectedAccountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.accountActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #344054;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.statusBadge.active,
+.statusBadge.authorized {
+  color: #067647;
+  border-color: #abefc6;
+  background: #ecfdf3;
+}
+
+.statusBadge.reconnect-required,
+.statusBadge.initializing {
+  color: #b54708;
+  border-color: #fedf89;
+  background: #fffaeb;
+}
+
+.statusBadge.no-primary-account,
+.statusBadge.account-mismatch {
+  color: #b42318;
+  border-color: #fecdca;
+  background: #fef3f2;
+}
+
+.statusMessage {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  max-width: 520px;
+  padding: 7px 10px;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 10px;
+  color: #101828;
+  line-height: 1.5;
+}
+
+.draftForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.draftForm input,
+.draftForm select {
+  min-width: 0;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+
+.availabilityOptions {
+  max-height: 230px;
+  overflow: auto;
+}
+
+.timeRangeInputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeRangeInputs input,
+.availabilityOptions input[type="number"],
+.availabilityOptions input[type="text"] {
+  width: 88px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.availabilityOptions input[type="text"] {
+  width: 150px;
+}
+
+.checkGroup {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  color: #344054;
+  font-size: 13px;
+}
+
+.checkGroup > span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.fc {
+  height: 100%;
+  --fc-border-color: #e4e7ec;
+  --fc-today-bg-color: #fff7df;
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-page-bg-color: #ffffff;
+  --fc-small-font-size: 12px;
+  font-size: var(--calendar-font-size);
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  margin: 0;
+  padding: var(--calendar-toolbar-padding);
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.fc .fc-toolbar-title {
+  color: #101828;
+  font-size: var(--calendar-title-size);
+}
+
+.fc .fc-button {
+  border: 1px solid #d0d5dd;
+  color: #344054;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  border-color: #155eef;
+  color: #155eef;
+  background: #edf4ff;
+}
+
+.fc .fc-daygrid-day-events {
+  display: none;
+}
+
+.dayCellInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--day-cell-gap);
+  min-height: var(--day-cell-min-height);
+  padding: 2px;
+}
+
+.dayNumber {
+  align-self: flex-end;
+  color: #344054;
+  font-size: 12px;
+}
+
+.daySummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.summaryPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--summary-pill-min-width);
+  height: var(--summary-pill-height);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #ffffff;
+  font-size: var(--summary-pill-font-size);
+  font-weight: 700;
+}
+
+.summaryPill.busy,
+.event-busy {
+  background: #667085;
+}
+
+.summaryPill.pending,
+.event-pending {
+  background: #f79009;
+}
+
+.summaryPill.confirmed,
+.event-confirmed {
+  background: #12b76a;
+}
+
+.summaryPill.generated,
+.event-generated {
+  background: #155eef;
+}
+
+.fc-timegrid-event,
+.fc-daygrid-event {
+  border: 0;
+}
+
+.fc .event-selected {
+  outline: 3px solid #101828;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.eventBlock {
+  display: grid;
+  gap: 1px;
+  padding: 2px 4px;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+.eventBlock span,
+.eventBlock strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

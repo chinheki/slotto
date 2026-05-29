@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Interview Scheduler Assistant",
+  "description": "Generate interview availability, reserve pending slots, and capture confirmed schedules from recruiter messages.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Interview Scheduler"
+  },
+  "background": {
+    "service_worker": "src/background/background.js",
+    "type": "module"
+  },
+  "oauth2": {
+    "client_id": "REPLACE_WITH_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/calendar.events"
+    ]
+  },
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "identity",
+    "identity.email"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://mail.google.com/*",
+    "https://www.linkedin.com/*",
+    "https://www.bizreach.jp/*",
+    "https://www.green-japan.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://www.linkedin.com/*",
+        "https://www.bizreach.jp/*",
+        "https://www.green-japan.com/*"
+      ],
+      "js": [
+        "src/content/content.js"
+      ]
+    }
+  ]
+}
