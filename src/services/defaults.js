@@ -1,3 +1,4 @@
+// Default user settings and sample calendar data for extension and web shells.
 export const defaultSettings = {
   calendars: {
     google: true,
@@ -22,6 +23,8 @@ export const defaultSettings = {
   useFixedDuration: true,
   slotDurationMinutes: 60,
   generatedSlotCount: 3,
+  remindersEnabled: true,
+  reminderLeadMinutes: 30,
   placeholderEventTitle: '面接',
   pendingExpirationHours: 48
 };

@@ -1,3 +1,6 @@
+// Chrome extension Google Calendar adapter for OAuth, event reads, and event writes.
+import { toSlottoCalendarEvent } from '../services/googleEventMapper.js';
+
 const CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
@@ -299,7 +302,7 @@ export async function deletePrimaryPlaceholderBatch({ events }) {
   };
 }
 
-export async function connectAdditionalGoogleCalendar({ timeMin, timeMax } = {}) {
+export async function connectAdditionalGoogleCalendar({ timeMin, timeMax, loginHint = '' } = {}) {
   if (!hasWebAuthFlow()) {
     return {
       ok: false,
@@ -319,7 +322,7 @@ export async function connectAdditionalGoogleCalendar({ timeMin, timeMax } = {})
 
   let redirectUrl;
   try {
-    const authUrl = buildAccountChooserUrl(clientId);
+    const authUrl = buildAccountChooserUrl(clientId, loginHint);
     redirectUrl = await chrome.identity.launchWebAuthFlow({
       url: authUrl,
       interactive: true
@@ -372,6 +375,24 @@ export async function connectAdditionalGoogleCalendar({ timeMin, timeMax } = {})
   };
 }
 
+export async function fetchAdditionalGoogleCalendarEvents({ account, accessToken, timeMin, timeMax }) {
+  if (!accessToken) {
+    return {
+      ok: false,
+      reason: 'authorization-required',
+      message: 'Calendar reconnect is required before live events can be shown.'
+    };
+  }
+
+  return fetchEventsWithToken({
+    token: accessToken,
+    accountId: account.id,
+    accountEmail: account.email,
+    timeMin,
+    timeMax
+  });
+}
+
 async function fetchEventsWithToken({ token, accountId, accountEmail = '', timeMin, timeMax, onUnauthorized }) {
   const url = new URL(CALENDAR_EVENTS_URL);
   url.searchParams.set('singleEvents', 'true');
@@ -414,56 +435,11 @@ async function fetchEventsWithToken({ token, accountId, accountEmail = '', timeM
 }
 
 function toCalendarEvent(item, accountId, accountEmail) {
-  const start = item.start?.dateTime ?? item.start?.date;
-  const end = item.end?.dateTime ?? item.end?.date;
-  if (!start || !end) {
-    return null;
-  }
-
-  const isSlottoPlaceholder = isPlaceholderEvent(item);
-  const originalTitle = item.summary || '(No title)';
-
-  return {
-    id: `${accountId}-${item.id}`,
-    provider: 'google',
-    title: isSlottoPlaceholder ? removePlaceholderPrefix(originalTitle) : originalTitle,
-    start: new Date(start).toISOString(),
-    end: new Date(end).toISOString(),
-    status: isSlottoPlaceholder ? 'pending' : 'confirmed',
-    sourceAccountId: accountId,
-    sourceAccountEmail: accountEmail,
-    details: {
-      googleEventId: item.id,
-      originalTitle,
-      isSlottoPlaceholder,
-      placeholderBatchId: item.extendedProperties?.private?.slottoPlaceholderBatchId || '',
-      description: item.description || '',
-      location: item.location || '',
-      htmlLink: item.htmlLink || '',
-      hangoutLink: item.hangoutLink || '',
-      conferenceLinks: getConferenceLinks(item),
-      recurrence: item.recurrence ?? [],
-      recurringEventId: item.recurringEventId || '',
-      eventType: item.eventType || '',
-      organizer: item.organizer ? {
-        email: item.organizer.email || '',
-        displayName: item.organizer.displayName || ''
-      } : null,
-      creator: item.creator ? {
-        email: item.creator.email || '',
-        displayName: item.creator.displayName || ''
-      } : null,
-      attendees: (item.attendees ?? []).map((attendee) => ({
-        email: attendee.email || '',
-        displayName: attendee.displayName || '',
-        responseStatus: attendee.responseStatus || ''
-      })),
-      status: item.status || '',
-      visibility: item.visibility || '',
-      updated: item.updated || '',
-      created: item.created || ''
-    }
-  };
+  return toSlottoCalendarEvent(item, {
+    accountId,
+    accountEmail,
+    placeholderPrefix: SLOTTO_PLACEHOLDER_PREFIX
+  });
 }
 
 function toGoogleEventPayload(event) {
@@ -516,11 +492,6 @@ function jsonHeaders(token) {
   };
 }
 
-function isPlaceholderEvent(item) {
-  return item.summary?.startsWith(SLOTTO_PLACEHOLDER_PREFIX)
-    || item.extendedProperties?.private?.slottoPlaceholder === 'true';
-}
-
 function removePlaceholderPrefix(title = '') {
   return title.replace(SLOTTO_PLACEHOLDER_PREFIX, '').trim();
 }
@@ -546,13 +517,16 @@ async function fetchGoogleProfile(token) {
   };
 }
 
-function buildAccountChooserUrl(clientId) {
+function buildAccountChooserUrl(clientId, loginHint = '') {
   const url = new URL(GOOGLE_AUTH_URL);
   url.searchParams.set('client_id', clientId);
   url.searchParams.set('response_type', 'token');
   url.searchParams.set('redirect_uri', chrome.identity.getRedirectURL('google'));
   url.searchParams.set('scope', `${CALENDAR_SCOPE} https://www.googleapis.com/auth/userinfo.email`);
   url.searchParams.set('prompt', 'select_account consent');
+  if (loginHint) {
+    url.searchParams.set('login_hint', loginHint);
+  }
   return url.toString();
 }
 
@@ -560,17 +534,6 @@ function extractAccessToken(redirectUrl) {
   const url = new URL(redirectUrl);
   const params = new URLSearchParams(url.hash.replace(/^#/, ''));
   return params.get('access_token');
-}
-
-function getConferenceLinks(item) {
-  const entryPoints = item.conferenceData?.entryPoints ?? [];
-  return entryPoints
-    .filter((entryPoint) => entryPoint.uri)
-    .map((entryPoint) => ({
-      type: entryPoint.entryPointType || '',
-      uri: entryPoint.uri,
-      label: entryPoint.label || ''
-    }));
 }
 
 function rangeStartIso() {

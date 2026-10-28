@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Slotto icon concept 4: S with calendar badge</title>
+  <desc id="desc">A branded S mark with a small calendar badge for Slotto scheduling.</desc>
+  <defs>
+    <linearGradient id="mark" x1="22" x2="108" y1="16" y2="111" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#155EEF"/>
+      <stop offset=".55" stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="#F8FAFC"/>
+  <circle cx="62" cy="62" r="44" fill="url(#mark)"/>
+  <path d="M76 39c-5.4-3.2-12.4-4.3-18.2-2.4-6.6 2.1-10.6 6.9-10.6 12.6 0 7.1 5.9 10.2 15.1 12.3 8.1 1.9 11 3.4 11 7.2 0 3.6-3.5 6.1-9.8 6.1-6.4 0-12.1-2.1-16.8-5.9" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="10"/>
+  <rect x="73" y="72" width="37" height="34" rx="9" fill="#FFFFFF"/>
+  <rect x="73" y="72" width="37" height="11" rx="9" fill="#155EEF"/>
+  <rect x="81" y="89" width="8" height="6" rx="3" fill="#14B8A6"/>
+  <rect x="94" y="89" width="8" height="6" rx="3" fill="#FACC15"/>
+</svg>

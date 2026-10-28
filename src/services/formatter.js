@@ -1,3 +1,4 @@
+// Multilingual candidate slot and calendar event formatter.
 import { getTimezoneLabel } from './dateTime.js';
 
 const weekdays = {
@@ -14,6 +15,10 @@ export function formatSlots(slots, language) {
 
 export function formatSlot(slot, language) {
   const start = new Date(slot.start);
+  if (slot.details?.isAllDay) {
+    return formatAllDaySlot(start, language);
+  }
+
   const end = new Date(slot.end);
   const startTime = formatTime(start);
   const endTime = formatTime(end);
@@ -28,6 +33,18 @@ export function formatSlot(slot, language) {
   }
 
   return `${start.getMonth() + 1}/${start.getDate()}(${weekdays.ja[start.getDay()]}) ${startTime}〜${endTime}`;
+}
+
+function formatAllDaySlot(start, language) {
+  if (language === 'en') {
+    return `${englishMonths[start.getMonth()]} ${start.getDate()} (${weekdays.en[start.getDay()]}) All day`;
+  }
+
+  if (language === 'zh') {
+    return `${start.getMonth() + 1}/${start.getDate()}（${weekdays.zh[start.getDay()]}）全天`;
+  }
+
+  return `${start.getMonth() + 1}/${start.getDate()}(${weekdays.ja[start.getDay()]}) 終日`;
 }
 
 function formatTime(date) {

@@ -1,11 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "Interview Scheduler Assistant",
+  "name": "Slotto",
   "description": "Generate interview availability, reserve pending slots, and capture confirmed schedules from recruiter messages.",
   "version": "0.1.0",
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "Interview Scheduler"
+    "default_title": "Slotto",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
   },
   "background": {
     "service_worker": "src/background/background.js",
@@ -18,11 +30,13 @@
     ]
   },
   "permissions": [
+    "alarms",
     "contextMenus",
     "storage",
     "activeTab",
     "identity",
-    "identity.email"
+    "identity.email",
+    "notifications"
   ],
   "host_permissions": [
     "https://www.googleapis.com/*",
@@ -41,6 +55,20 @@
       ],
       "js": [
         "src/content/content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/reminders/character.png",
+        "assets/reminders/character-128.png"
+      ],
+      "matches": [
+        "https://mail.google.com/*",
+        "https://www.linkedin.com/*",
+        "https://www.bizreach.jp/*",
+        "https://www.green-japan.com/*"
       ]
     }
   ]

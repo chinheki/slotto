@@ -1,5 +1,5 @@
-// Chrome extension popup UI for calendar review, availability generation,
-// placeholder reservations, and Google Calendar event editing.
+// Chrome extension popup UI for calendar review, suggested/manual availability
+// selection, placeholder reservations, and Google Calendar event editing.
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import FullCalendar from '@fullcalendar/react';
@@ -10,7 +10,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { CalendarDays, Clock3, Copy, Plus, RefreshCw, Settings, Unplug } from 'lucide-react';
 import { clearLocalCalendarData, clearSelectedDraft, getAppState, getCalendarAuthorization, removeCalendarAuthorization, saveBusyEvents, saveCalendarAuthorization, saveConnectedAccounts, savePendingEvents, saveSettings } from '../adapters/chromeStorage.js';
-import { confirmPrimaryPlaceholderEvent, connectAdditionalGoogleCalendar, createPrimaryCalendarEvent, createPrimaryPlaceholderEvents, deletePrimaryPlaceholderBatch, fetchPrimaryGoogleCalendarEvents, updateGoogleCalendarEvent, updatePrimaryPlaceholderBatch } from '../adapters/googleCalendar.js';
+import { confirmPrimaryPlaceholderEvent, connectAdditionalGoogleCalendar, createPrimaryCalendarEvent, createPrimaryPlaceholderEvents, deletePrimaryPlaceholderBatch, fetchAdditionalGoogleCalendarEvents, fetchPrimaryGoogleCalendarEvents, updateGoogleCalendarEvent, updatePrimaryPlaceholderBatch } from '../adapters/googleCalendar.js';
 import { formatSlot, formatSlots } from '../services/formatter.js';
 import { createTranslator } from '../services/i18n.js';
 import { createInterviewEvent, generateAvailability } from '../services/scheduler.js';
@@ -51,9 +51,16 @@ function App() {
 
   useEffect(() => {
     getAppState().then((state) => {
-      const slots = buildGeneratedSlots(state);
+      const nextBusyEvents = dedupeCalendarEvents(state.busyEvents);
+      const nextState = nextBusyEvents.length === state.busyEvents.length
+        ? state
+        : { ...state, busyEvents: nextBusyEvents };
+      const slots = buildGeneratedSlots(nextState);
       setCurrentSlots(slots);
-      setAppState(state);
+      setAppState(nextState);
+      if (nextBusyEvents.length !== state.busyEvents.length) {
+        saveBusyEvents(nextBusyEvents);
+      }
     });
   }, []);
 
@@ -93,6 +100,11 @@ function App() {
 
   async function updateAvailabilitySettings(patch) {
     await updateSettings({ ...appState.settings, ...patch });
+  }
+
+  async function testEventReminder() {
+    await chrome.runtime.sendMessage({ type: 'TEST_EVENT_REMINDER', title: t('testReminderEvent') });
+    setStatusMessage(t('testReminderSent'));
   }
 
   async function connectGoogle(mode) {
@@ -203,6 +215,130 @@ function App() {
         saveConnectedAccounts(nextConnectedAccounts)
       ]);
       setStatusMessage(t('loadedEvents', { count: result.events.length, email: result.account.email }));
+    } finally {
+      setIsConnectingCalendar(false);
+    }
+  }
+
+  async function reconnectAdditionalCalendar(accountId) {
+    if (isConnectingCalendar) {
+      return;
+    }
+
+    const account = appState.connectedAccounts.find((item) => item.id === accountId);
+    if (!account) {
+      return;
+    }
+
+    setIsConnectingCalendar(true);
+    setStatusMessage(t('reconnectingAccount', { email: account.email ?? accountId }));
+    try {
+      const result = await connectAdditionalGoogleCalendar({ loginHint: account.email });
+      if (!result.ok) {
+        setStatusMessage(result.message);
+        return;
+      }
+
+      const nextConnectedAccounts = upsertAccount(appState.connectedAccounts, result.account).map((item) => (
+        item.id === result.account.id ? { ...item, authorizationStatus: 'authorized' } : item
+      ));
+      const nextBusyEvents = replaceEventsForAccount(appState.busyEvents, result.account.id, result.events);
+      const nextState = {
+        ...appState,
+        busyEvents: nextBusyEvents,
+        connectedAccounts: nextConnectedAccounts
+      };
+
+      setAppState(nextState);
+      setCurrentSlots(buildGeneratedSlots(nextState));
+      setSelectedEvent((current) => current ? findEventById(buildCalendarEvents(nextState, buildGeneratedSlots(nextState)), current.id) : null);
+      await Promise.all([
+        saveBusyEvents(nextBusyEvents),
+        saveCalendarAuthorization(result.account.id, { accessToken: result.accessToken }),
+        saveConnectedAccounts(nextConnectedAccounts)
+      ]);
+      setStatusMessage(t('loadedEvents', { count: result.events.length, email: result.account.email }));
+    } finally {
+      setIsConnectingCalendar(false);
+    }
+  }
+
+  async function hardRefreshCalendars() {
+    if (isConnectingCalendar) {
+      return;
+    }
+
+    if (!appState.connectedAccounts.length) {
+      setShowConnectOptions(true);
+      setStatusMessage(t('noCalendarConnected'));
+      return;
+    }
+
+    setIsConnectingCalendar(true);
+    setStatusMessage(t('hardRefreshingCalendar'));
+    try {
+      const primaryAccountId = appState.primaryAccount ? `google:${appState.primaryAccount.id}` : '';
+      const refreshedEvents = [];
+      const authorizedAccountIds = new Set();
+
+      for (const account of appState.connectedAccounts) {
+        let result;
+        if (account.id === primaryAccountId) {
+          result = await fetchPrimaryGoogleCalendarEvents({ interactive: true, accountId: account.id });
+          if (result.ok) {
+            refreshedEvents.push(...result.events.map((event) => ({
+              ...event,
+              sourceAccountEmail: appState.primaryAccount.email
+            })));
+          }
+        } else {
+          const authorization = await getCalendarAuthorization(account.id);
+          result = await fetchAdditionalGoogleCalendarEvents({
+            account,
+            accessToken: authorization?.accessToken
+          });
+          if (result.ok) {
+            refreshedEvents.push(...result.events);
+          }
+        }
+
+        if (result?.ok) {
+          authorizedAccountIds.add(account.id);
+          await saveCalendarAuthorization(account.id, account.id === primaryAccountId ? {} : await getCalendarAuthorization(account.id));
+        }
+      }
+
+      const nextConnectedAccounts = appState.connectedAccounts.map((account) => ({
+        ...account,
+        authorizationStatus: authorizedAccountIds.has(account.id) ? 'authorized' : 'reconnect-required'
+      }));
+      const keptGoogleEvents = appState.busyEvents.filter((event) => (
+        event.provider === 'google'
+        && event.sourceAccountId
+        && !authorizedAccountIds.has(event.sourceAccountId)
+      ));
+      const nextBusyEvents = dedupeCalendarEvents([
+        ...appState.busyEvents.filter((event) => event.provider !== 'google'),
+        ...keptGoogleEvents,
+        ...refreshedEvents
+      ]);
+      const nextState = {
+        ...appState,
+        busyEvents: nextBusyEvents,
+        connectedAccounts: nextConnectedAccounts
+      };
+
+      setAppState(nextState);
+      setCurrentSlots(buildGeneratedSlots(nextState));
+      setSelectedEvent((current) => current ? findEventById(buildCalendarEvents(nextState, buildGeneratedSlots(nextState)), current.id) : null);
+      await Promise.all([
+        saveBusyEvents(nextBusyEvents),
+        saveConnectedAccounts(nextConnectedAccounts)
+      ]);
+      setStatusMessage(t('hardRefreshedCalendar', {
+        count: refreshedEvents.length,
+        failedCount: appState.connectedAccounts.length - authorizedAccountIds.size
+      }));
     } finally {
       setIsConnectingCalendar(false);
     }
@@ -415,6 +551,7 @@ function openEditEventDraft(event) {
     setManualSelectionMode(true);
     setManualSlotsActive(true);
     await saveSettings(nextSettings);
+    setStatusMessage(t('manualSelectionStarted'));
   }
 
   function cancelManualTimeSelection() {
@@ -431,16 +568,6 @@ function openEditEventDraft(event) {
 
   function toggleManualTimeSlot(date) {
     const slot = makeOneHourSlot(date);
-    const hasConflict = calendarEvents.some((event) => {
-      if (event.extendedProps.kind === 'generated') {
-        return false;
-      }
-      return rangesOverlap(new Date(event.start), new Date(event.end), new Date(slot.start), new Date(slot.end));
-    });
-    if (hasConflict) {
-      setStatusMessage(t('slotOverlaps'));
-      return;
-    }
 
     setCurrentSlots((slots) => (
       slots.some((item) => item.id === slot.id)
@@ -578,8 +705,10 @@ function openEditEventDraft(event) {
             syncStatus={appState.syncStatus}
             onChange={updateSettings}
             onAddAnother={() => connectGoogle('other')}
+            onReconnectAccount={reconnectAdditionalCalendar}
             onDisconnectAccount={disconnectCalendarAccount}
             onClearLocalData={clearLocalData}
+            onTestReminder={testEventReminder}
             isConnectingCalendar={isConnectingCalendar}
             t={t}
           />
@@ -596,6 +725,7 @@ function openEditEventDraft(event) {
             onCloseConnect={() => setShowConnectOptions(false)}
             onOpenConnect={() => setShowConnectOptions(true)}
             onConnectGoogle={connectGoogle}
+            onHardRefresh={hardRefreshCalendars}
             isConnectingCalendar={isConnectingCalendar}
             onDateSelect={setSelectedDate}
             selectedEvent={selectedEvent}
@@ -701,6 +831,7 @@ function CalendarPage({
   onCloseConnect,
   onOpenConnect,
   onConnectGoogle,
+  onHardRefresh,
   isConnectingCalendar,
   onDateSelect,
   selectedEvent,
@@ -759,6 +890,10 @@ function CalendarPage({
           <Unplug size={15} />
           {isConnectingCalendar ? t('connecting') : t('connect')}
         </button>
+        <button className="secondaryButton" onClick={onHardRefresh} disabled={isConnectingCalendar || !hasConnectedCalendar}>
+          <RefreshCw size={15} />
+          {isConnectingCalendar ? t('hardRefreshing') : t('hardRefresh')}
+        </button>
         <button className="secondaryButton" onClick={() => onCreateEvent(selectedDate)}>
           <Plus size={15} />
           {t('createEvent')}
@@ -809,7 +944,7 @@ function CalendarPage({
           dayCellContent={(arg) => renderDayCell(arg, daySummaries, t)}
           dateClick={handleDateClick}
           eventClick={(arg) => {
-            if (manualSelectionMode && arg.event.extendedProps.kind === 'generated') {
+            if (manualSelectionMode && !arg.event.allDay) {
               onToggleTimeSlot(arg.event.start);
               return;
             }
@@ -858,7 +993,7 @@ function ConnectOverlay({ open, onOpen, onClose, onConnectGoogle, isConnectingCa
   );
 }
 
-function SettingsPage({ settings, connectedAccounts, primaryAccount, storageOwnerAccount, syncStatus, onChange, onAddAnother, onDisconnectAccount, onClearLocalData, isConnectingCalendar, t }) {
+function SettingsPage({ settings, connectedAccounts, primaryAccount, storageOwnerAccount, syncStatus, onChange, onAddAnother, onReconnectAccount, onDisconnectAccount, onClearLocalData, onTestReminder, isConnectingCalendar, t }) {
   const update = (patch) => onChange({ ...settings, ...patch });
   const updateRules = (patch) => onChange({ ...settings, rules: { ...settings.rules, ...patch } });
 
@@ -924,6 +1059,20 @@ function SettingsPage({ settings, connectedAccounts, primaryAccount, storageOwne
       </section>
 
       <section className="panel">
+        <h2>{t('eventReminders')}</h2>
+        <label>
+          <input type="checkbox" checked={settings.remindersEnabled !== false} onChange={(event) => update({ remindersEnabled: event.target.checked })} /> {t('enableEventReminders')}
+        </label>
+        <label>
+          <span>{t('remindBefore')}</span>
+          <select value={settings.reminderLeadMinutes ?? 30} disabled={settings.remindersEnabled === false} onChange={(event) => update({ reminderLeadMinutes: Number(event.target.value) })}>
+            {[5, 10, 15, 30, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes} {t('minutes')}</option>)}
+          </select>
+        </label>
+        <button className="secondaryButton fullWidth" onClick={onTestReminder}>{t('testMascotReminder')}</button>
+      </section>
+
+      <section className="panel">
         <div className="panelHeader">
           <h2>{t('connectedCalendars')}</h2>
         </div>
@@ -936,6 +1085,9 @@ function SettingsPage({ settings, connectedAccounts, primaryAccount, storageOwne
               </div>
               <div className="accountActions">
                 <span className={`statusBadge ${account.authorizationStatus}`}>{formatAccountStatus(account.authorizationStatus, t)}</span>
+                {account.authorizationStatus !== 'authorized' ? (
+                  <button className="primaryButton compact" disabled={isConnectingCalendar} onClick={() => onReconnectAccount(account.id)}>{t('reconnect')}</button>
+                ) : null}
                 <button className="secondaryButton compact" disabled={isConnectingCalendar} onClick={() => onDisconnectAccount(account.id)}>{t('disconnect')}</button>
               </div>
             </div>
@@ -1009,10 +1161,50 @@ function upsertAccount(accounts, nextAccount) {
 }
 
 function replaceEventsForAccount(events, accountId, nextEvents) {
-  return [
+  return dedupeCalendarEvents([
     ...events.filter((event) => event.sourceAccountId !== accountId),
     ...nextEvents
-  ];
+  ]);
+}
+
+function dedupeCalendarEvents(events) {
+  const byKey = new Map();
+  const localEvents = [];
+
+  for (const event of events) {
+    const key = calendarEventIdentity(event);
+    if (!key) {
+      localEvents.push(event);
+      continue;
+    }
+
+    const existing = byKey.get(key);
+    if (!existing || isNewerGoogleEvent(event, existing)) {
+      byKey.set(key, event);
+    }
+  }
+
+  return [...localEvents, ...byKey.values()].sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+
+function calendarEventIdentity(event) {
+  const googleEventId = event.details?.googleEventId;
+  if (!googleEventId) {
+    return '';
+  }
+  return `${event.sourceAccountId || event.provider}:${googleEventId}`;
+}
+
+function isNewerGoogleEvent(nextEvent, currentEvent) {
+  const nextUpdated = Date.parse(nextEvent.details?.updated || '');
+  const currentUpdated = Date.parse(currentEvent.details?.updated || '');
+  if (Number.isFinite(nextUpdated) && Number.isFinite(currentUpdated)) {
+    return nextUpdated >= currentUpdated;
+  }
+  if (nextEvent.details?.isAllDay !== currentEvent.details?.isAllDay) {
+    return !nextEvent.details?.isAllDay;
+  }
+  return true;
 }
 
 function getPlaceholderBatchEvents(events, selectedEvent) {
@@ -1040,10 +1232,6 @@ function makeOneHourSlot(date) {
     start: start.toISOString(),
     end: end.toISOString()
   };
-}
-
-function rangesOverlap(aStart, aEnd, bStart, bEnd) {
-  return aStart < bEnd && bStart < aEnd;
 }
 
 function isoToLocalInput(value) {
@@ -1180,8 +1368,9 @@ function buildCalendarEvents(state, generatedSlots) {
   const busyEvents = state.busyEvents.map((event) => ({
     id: event.id,
     title: event.title,
-    start: event.start,
-    end: event.end,
+    start: event.details?.isAllDay ? event.details.allDayStartDate : event.start,
+    end: event.details?.isAllDay ? event.details.allDayEndDateExclusive : event.end,
+    allDay: Boolean(event.details?.isAllDay),
     extendedProps: { kind: event.status === 'pending' ? 'pending' : 'busy', source: event }
   }));
 

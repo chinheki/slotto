@@ -1,4 +1,4 @@
-# Interview Scheduler Assistant
+# Slotto
 
 A lightweight Chrome Extension MVP for interview scheduling workflows. The extension can be loaded locally without a build step and keeps the scheduling logic isolated from Chrome-specific adapters so it can later move into a web app.
 

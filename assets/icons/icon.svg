@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Slotto icon</title>
+  <desc id="desc">Three candidate time slots with one selected, representing choosing an interview time.</desc>
+  <defs>
+    <linearGradient id="bg" x1="18" x2="110" y1="18" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <rect x="26" y="28" width="76" height="18" rx="9" fill="#ECFEFF" opacity=".92"/>
+  <rect x="26" y="55" width="76" height="18" rx="9" fill="#FFFFFF"/>
+  <rect x="26" y="82" width="76" height="18" rx="9" fill="#ECFEFF" opacity=".92"/>
+  <circle cx="36" cy="37" r="4" fill="#0284C7"/>
+  <circle cx="36" cy="91" r="4" fill="#0284C7"/>
+  <path d="M32 64l8 8 17-18" fill="none" stroke="#059669" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+  <rect x="62" y="61" width="27" height="6" rx="3" fill="#155EEF"/>
+  <path d="M95 22l3 7.7 7.7 3-7.7 3-3 7.7-3-7.7-7.7-3 7.7-3 3-7.7z" fill="#FACC15"/>
+</svg>

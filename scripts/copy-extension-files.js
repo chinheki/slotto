@@ -1,6 +1,9 @@
+// Build helper that injects local OAuth config and copies extension runtime
+// assets into the load-unpacked dist directory.
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const copyTargets = [
+  ['assets', 'dist/assets'],
   ['src/background', 'dist/src/background'],
   ['src/content', 'dist/src/content'],
   ['src/services', 'dist/src/services'],

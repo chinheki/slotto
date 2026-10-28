@@ -64,6 +64,24 @@ Backend
 - `chrome.storage.sync`：设置、已关联账号信息、同步所有者
 - `chrome.storage.local`：日程缓存、授权状态、本地草稿
 
+## Web App Auth Plan
+
+```text
+Phase 1
+├── 无后端
+├── Web App 使用独立的 Google Web OAuth
+├── 网页版与 Chrome Extension 不共享授权 token
+├── 每台设备、每个浏览器需要重新登录主账号
+└── 其他 Google 日历账号也需要在网页版重新关联
+
+Phase 2
+├── Firebase DB
+├── 存储 Slotto 用户与已关联日历账号关系
+├── 同步网页端和插件端的账号状态
+├── 支持跨设备恢复关联账号列表
+└── 为后续更安全的 token 管理和后台同步留接口
+```
+
 ## Integration
 
 ```text

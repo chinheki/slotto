@@ -1,0 +1,496 @@
+/* Mobile-first Slotto web app layout, controls, calendar, and account settings styles. */
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #132238;
+  background: #edf5f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #edf5f8;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 520px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: max(14px, env(safe-area-inset-top)) 14px calc(78px + env(safe-area-inset-bottom));
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 2px 4px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.brand p,
+.brand h1,
+.panel h2 {
+  margin: 0;
+}
+
+.brand p {
+  color: #4b6577;
+  font-size: 13px;
+}
+
+.brand h1 {
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #d7e4ea;
+  border-radius: 8px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.sectionHeader,
+.sectionTitle,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sectionTitle {
+  justify-content: flex-start;
+  color: #155eef;
+}
+
+.panel h2 {
+  color: #1f3447;
+  font-size: 15px;
+}
+
+.calendarPanel {
+  gap: 10px;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.calendarGrid.weekdays {
+  color: #6b7f8f;
+  font-size: 10px;
+  text-align: center;
+}
+
+.dayCell {
+  display: grid;
+  align-content: space-between;
+  min-width: 0;
+  aspect-ratio: 1;
+  border: 1px solid #e1ebf0;
+  border-radius: 7px;
+  padding: 5px;
+  color: #20364a;
+  text-align: left;
+  background: #ffffff;
+}
+
+.dayCell.selected {
+  border-color: #155eef;
+  background: #eff6ff;
+}
+
+.dayCell.mutedDay {
+  color: #9aa9b5;
+  background: #f8fbfc;
+}
+
+.dayCell span {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.dayDots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-height: 6px;
+}
+
+.dayDots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+.dayDots i.pending {
+  background: #f59e0b;
+}
+
+.dayDots i.confirmed {
+  background: #10b981;
+}
+
+.dayAgenda {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #e1ebf0;
+  border-radius: 8px;
+  padding: 9px;
+  background: #f8fbfc;
+}
+
+.dayAgenda strong {
+  font-size: 13px;
+}
+
+.dayAgenda p {
+  margin: 0;
+  color: #52697a;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  color: #52697a;
+  font-size: 12px;
+}
+
+label.check {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #cbd9e1;
+  border-radius: 7px;
+  padding: 9px 10px;
+  color: #132238;
+  background: #ffffff;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  accent-color: #155eef;
+}
+
+.primaryButton,
+.secondaryButton,
+.iconButton,
+.ghostIcon,
+.ghostTextButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.primaryButton {
+  color: #ffffff;
+  background: #155eef;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.secondaryButton {
+  color: #1f3447;
+  border-color: #cbd9e1;
+  background: #f7fbfd;
+}
+
+.secondaryButton.compact {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.iconButton,
+.ghostIcon {
+  width: 38px;
+  height: 38px;
+  color: #155eef;
+  border-color: #cbd9e1;
+  background: #ffffff;
+}
+
+.ghostIcon {
+  width: 32px;
+  height: 32px;
+}
+
+.ghostTextButton {
+  min-height: 30px;
+  border-color: #cbd9e1;
+  padding: 5px 8px;
+  color: #155eef;
+  font-size: 12px;
+  background: #ffffff;
+}
+
+.languageRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.languageRow label {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid #d7e4ea;
+  border-radius: 7px;
+  background: #f8fbfc;
+}
+
+.accountPanel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e1ebf0;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fbfc;
+}
+
+.accountPanel h3,
+.accountPanel p {
+  margin: 0;
+}
+
+.accountPanel h3 {
+  color: #1f3447;
+  font-size: 14px;
+}
+
+.accountPanel p {
+  color: #52697a;
+  font-size: 12px;
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  border-top: 1px solid #e1ebf0;
+  color: #52697a;
+  font-size: 13px;
+}
+
+.accountRow strong {
+  color: #155eef;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.accountRow b,
+.accountRow small {
+  display: block;
+}
+
+.accountRow b {
+  color: #1f3447;
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.accountRow small {
+  margin-top: 2px;
+  color: #6b7f8f;
+  font-size: 11px;
+}
+
+.accountRowStack {
+  align-items: flex-start;
+  padding: 8px 0;
+}
+
+.accountActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.slotList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slotCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  border: 1px solid #d7e4ea;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.slotCard.candidate {
+  background: #ecfeff;
+}
+
+.slotCard.pending {
+  background: #fff7ed;
+}
+
+.slotCard span {
+  overflow-wrap: anywhere;
+}
+
+.timeline {
+  margin-bottom: 16px;
+}
+
+.timelineItem {
+  display: grid;
+  gap: 3px;
+  border-left: 4px solid #93c5fd;
+  padding: 7px 0 7px 10px;
+}
+
+.timelineItem.pending {
+  border-color: #f59e0b;
+}
+
+.timelineItem.confirmed {
+  border-color: #10b981;
+}
+
+.timelineItem strong {
+  color: #132238;
+  font-size: 13px;
+}
+
+.timelineItem span {
+  color: #52697a;
+  font-size: 12px;
+}
+
+.toast {
+  position: sticky;
+  bottom: 74px;
+  margin: 0 auto;
+  max-width: 92%;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  background: rgba(15, 23, 42, .9);
+}
+
+.bottomNav {
+  position: fixed;
+  z-index: 10;
+  right: 14px;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-width: 492px;
+  margin: 0 auto;
+  border: 1px solid #d7e4ea;
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .13);
+  backdrop-filter: blur(12px);
+}
+
+.bottomNav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  color: #52697a;
+  background: transparent;
+}
+
+.bottomNav button.active {
+  color: #155eef;
+  background: #eff6ff;
+}
+
+@media (min-width: 700px) {
+  .app {
+    padding-top: 24px;
+  }
+}

@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build && node scripts/copy-extension-files.js",
+    "build": "node scripts/generate-icons.js && vite build && node scripts/copy-extension-files.js",
     "dev": "vite build --watch",
+    "web:dev": "node scripts/generate-icons.js && vite --config web/vite.config.js --host 0.0.0.0 --port 5173 --strictPort",
+    "web:build": "node scripts/generate-icons.js && vite build --config web/vite.config.js",
     "test": "node scripts/smoke-test.js"
   },
   "dependencies": {

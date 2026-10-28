@@ -1,10 +1,10 @@
-# Interview Scheduler Assistant - Product Requirement Document (PRD)
+# Slotto - Product Requirement Document (PRD)
 
 ## 1. Product Overview
 
 ### Product Name
 
-Interview Scheduler Assistant
+Slotto
 
 ### Product Type
 
@@ -171,28 +171,29 @@ User wants to manually choose candidate interview slots directly from the calend
 1. User opens the Calendar page.
 2. User clicks "Select time slots".
 3. Calendar switches to week view.
-4. User clicks one or more time slots.
-5. Each selected slot:
+4. Extension starts with no pre-filled suggested slots.
+5. User adds time slots directly on the calendar.
+6. Each selected slot:
 
    * Starts only on the hour or half hour
    * Is exactly one hour long
    * Is highlighted on the calendar
    * Can be clicked again to remove it from the selection
 
-6. User clicks "Confirm selection".
-7. Extension switches to the Availability page.
-8. Generated response text is already filled from the selected slots.
-9. User can switch output languages.
-10. User clicks create placeholder events.
-11. Extension opens a placeholder dialog.
-12. User enters:
+7. User clicks "Confirm selection".
+8. Extension switches to the Availability page.
+9. Generated response text is already filled from the selected slots.
+10. User can switch output languages.
+11. User clicks create placeholder events.
+12. Extension opens a placeholder dialog.
+13. User enters:
 
    * Title (required, default: `面接`)
    * Details (optional)
 
-13. Extension creates placeholder events from the selected slots.
-14. The generated candidate text remains unchanged after placeholder creation.
-15. Candidate slots refresh only when the user clicks random candidate generation.
+14. Extension creates placeholder events from the selected slots.
+15. The generated candidate text remains unchanged after placeholder creation.
+16. Candidate slots refresh only when the user clicks random candidate generation.
 
 ### Expected Output
 
@@ -514,6 +515,21 @@ Right click selected text:
 * Time
 * Time range
 * Timezone
+
+---
+
+## 6.7 Upcoming Event Reminders
+
+### Requirements
+
+* Upcoming timed events trigger a desktop system notification.
+* The default reminder time is 30 minutes before the event.
+* Users can disable reminders or choose 5, 10, 15, 30, or 60 minutes in Settings.
+* Settings include a test button that triggers a sample reminder after 10 seconds.
+* On supported content-script sites, a pixel character mascot appears in the upper-right corner with a localized speech bubble.
+* Reminder text and controls support Japanese, English, and Chinese.
+* Clicking a system notification opens the meeting URL when available, otherwise the Google Calendar event.
+* All-day events do not trigger these timed reminders.
 
 ---
 
@@ -915,14 +931,17 @@ Use Chrome Sync as the source of truth for lightweight cross-device state under 
 
 Use local extension storage for per-device authorization and cache data.
 
+For the Web App MVP, use a separate Google Web OAuth client without a backend. The Web App does not share Chrome Extension tokens, so each browser/device must log in again, and additional Google Calendar accounts must be reconnected inside the Web App.
+
 ### Future Approach
 
 Introduce a backend when cross-Chrome-account login, no-reconnect multi-device calendar access, or web app support becomes required.
 
 Potential stack:
 
-* Supabase
 * Firebase
+
+Phase 2 should use Firebase DB to store Slotto user records, connected calendar account mappings, and cross-device account state. Token storage and refresh strategy should be designed separately before production release.
 
 ---
 

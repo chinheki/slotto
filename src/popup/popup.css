@@ -347,6 +347,12 @@ h2 {
   font-size: 12px;
 }
 
+.primaryButton.compact {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .ghostButton.compact {
   min-height: 28px;
   padding: 4px 7px;
